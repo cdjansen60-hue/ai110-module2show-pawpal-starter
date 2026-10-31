@@ -2,16 +2,20 @@
 
 ## 1. System Design
 
+**Three Core Actions**
+- Add a pet
+- Schedule a task (Task can be broken down into walks, feeding, med, grooming, etc.)
+- See today's tasks
+
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+My initial design was just Tasks, Pets, and the Schedular. The schedular held the scheduled tasks and the Task objects were time agnostic, with the assumption that the schedular would handle multiple instances of a task object for a different scheduled time/date.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Claude pointed out that later in the assignment that it expects a certain object structure - notably an Owner object (in hindsight, I should have considered this first, I was expecting only one owner per app initially). This changed the hierarchy considerably so that the Schedular no longer owns any data, and instead points to the data held by Owners, Pets, and Tasks respectively.
 
+Upon review of the skeleton by Claude, I chose to update the task relationship to include a reference to the pet it was for. Time strings were updated to be datetime.time objects for validation and ease of sorting. Priority and Frequency were updated to be enum values instead of free strings. A method to get a pet by name through the Owner was also added for future sorting. 
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
