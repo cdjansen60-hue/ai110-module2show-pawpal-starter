@@ -63,19 +63,48 @@ Marked the first task complete. Next up: 08:00 Breakfast (Luna)
 
 ## 🧪 Testing PawPal+
 
+Run from the project root:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
 
-Sample test output:
+(Use `python -m pytest`, not bare `pytest`: the `-m` form puts the project root on the import path so the tests can import `pawpal_system`.)
+
+### What the tests cover
+
+The 16 tests in `tests/test_pawpal.py` exercise the backend in `pawpal_system.py`. Every test uses a fixed date (`2026-11-02`) so results don't depend on when they run.
+
+| Area | What is verified |
+|---|---|
+| Basics | `mark_complete()` flips the status; `add_task()` increases a pet's task count |
+| Sorting | Tasks added out of order come back chronologically; across dates, date wins (tomorrow 07:00 sorts after today 18:00) |
+| Daily recurrence | Completing a daily task creates an incomplete copy dated +1 day, same time, attached to the same pet |
+| Weekly / one-time | Weekly → +7 days; one-time → no copy |
+| Double completion | Completing the same task twice creates only one copy |
+| Conflict detection | Two tasks at the same date and time give one warning, labeled *same pet* or *different pets* |
+| No false conflicts | Same time on different dates, or a completed task, is not a conflict |
+| Filtering | By pet (case-insensitive), by status, and both combined |
+| Empty cases | A pet with no tasks / an empty day returns `[]`; `get_next_task()` returns `None`; it skips completed tasks |
+| Data integrity | Duplicate pet names are rejected (case-insensitive); a task can't belong to two pets; identical-looking tasks stay distinct |
+
+Successful run:
 
 ```
-# Paste your pytest output here
+============================= test session starts =============================
+platform win32 -- Python 3.13.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Caleb\Desktop\School\FAU\CEN4010 - Principles of Software Engineering\week4\ai110-module2show-pawpal-starter
+plugins: anyio-4.15.1
+collected 16 items
+
+tests\test_pawpal.py ................                                    [100%]
+
+============================= 16 passed in 0.06s ==============================
 ```
+
+### Confidence level: ★★★★☆ (4/5)
+
+The scheduling logic is well covered, including edge cases. The suite was also checked by deliberately breaking the code (sorting ignoring the date, recurrence counting from today, conflicts counting completed tasks, and others), and every break made at least one test fail. One star is held back because the Streamlit UI (`app.py`) has no automated tests, and conflict detection only catches exact start-time matches, not overlapping durations.
 
 ## 📐 Smarter Scheduling
 
