@@ -27,9 +27,7 @@ Upon review of the skeleton by Claude, I chose to update the task relationship t
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
-
+The scheduler only handles exact start-time conflicts. This may result in overlapping tasks, but that is a decision for the owner to make (i.e. in the case of an overlapping recurring task). Overlapping tasks are not always necessarily an issue.
 ---
 
 ## 3. AI Collaboration

@@ -79,14 +79,15 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+All scheduling logic lives on the `Scheduler` class in `pawpal_system.py`. The methods take and return plain lists of `Task` objects, so they can be chained, e.g. `filter_tasks(sort_by_time(tasks), pet_name="Luna")`.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Scheduler.sort_by_time()` | Orders tasks by due date, then start time. `start_time` is a `datetime.time`, so ordering is always chronological (no `"9:00"` vs `"10:00"` string-sort bug). |
+| Today's schedule | `Scheduler.get_todays_tasks()`, `Scheduler.get_next_task()` | Tasks due on a given day (default: today) in time order; the next task is the earliest one not yet completed. |
+| Filtering | `Scheduler.filter_tasks()` | Filters by pet name (case-insensitive) and/or completion status. Passing `None` for a filter skips it. |
+| Conflict handling | `Scheduler.detect_conflicts()` | Groups incomplete tasks by (date, start time) and returns a warning string for every slot with 2+ tasks, labeled *same pet* or *different pets*. Warns instead of raising. Only exact start-time matches count; overlapping durations are left to the owner. |
+| Recurring tasks | `Scheduler.mark_task_complete()` | Completing a `daily` or `weekly` task adds the next occurrence (+1 day / +7 days, via `timedelta`) to the same pet. The next date is counted from the task's due date, so the series never skips or repeats a day. Completing a task twice does nothing. |
 
 ## 📸 Demo Walkthrough
 

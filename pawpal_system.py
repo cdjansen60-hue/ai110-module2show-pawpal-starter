@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date, time
+from collections import defaultdict
+from dataclasses import dataclass, field, replace
+from datetime import date, time, timedelta
 from enum import StrEnum
 
 
@@ -21,6 +22,13 @@ class Frequency(StrEnum):
     ONCE = "once"
     DAILY = "daily"
     WEEKLY = "weekly"
+
+
+# How far ahead the next occurrence of a recurring task is scheduled.
+RECURRENCE_INTERVALS = {
+    Frequency.DAILY: timedelta(days=1),
+    Frequency.WEEKLY: timedelta(weeks=1),
+}
 
 
 # eq=False: tasks compare by identity, so two identical-looking tasks stay distinct
@@ -106,8 +114,8 @@ class Scheduler:
         return self.owner.get_all_tasks()
 
     def sort_by_time(self, tasks: list[Task]) -> list[Task]:
-        """Return the tasks ordered by start time, earliest first."""
-        return sorted(tasks, key=lambda t: t.start_time)
+        """Return the tasks ordered by date, then start time, earliest first."""
+        return sorted(tasks, key=lambda t: (t.due_date, t.start_time))
 
     def get_todays_tasks(self, day: date | None = None) -> list[Task]:
         """Return tasks due on `day` (default: today), sorted by start time."""
@@ -120,3 +128,51 @@ class Scheduler:
             if not task.completed:
                 return task
         return None
+
+    def filter_tasks(
+        self, tasks: list[Task], pet_name: str | None = None, completed: bool | None = None
+    ) -> list[Task]:
+        """Return the tasks matching a pet name and/or completion status; None skips that filter."""
+        return [
+            t
+            for t in tasks
+            if (pet_name is None or t.pet.name.lower() == pet_name.lower())
+            and (completed is None or t.completed == completed)
+        ]
+
+    def mark_task_complete(self, task: Task) -> Task | None:
+        """Complete a task; for daily/weekly tasks, schedule and return the next occurrence.
+
+        The next due date is counted from the task's own due date (not today), so a
+        series never skips or duplicates a day. Completing an already-completed task
+        does nothing.
+        """
+        if task.completed:
+            return None
+        task.mark_complete()
+        interval = RECURRENCE_INTERVALS.get(task.frequency)
+        if interval is None:
+            return None
+        next_task = replace(task, due_date=task.due_date + interval, completed=False, pet=None)
+        task.pet.add_task(next_task)
+        return next_task
+
+    def detect_conflicts(self, tasks: list[Task]) -> list[str]:
+        """Return a warning for each date/time shared by two or more incomplete tasks.
+
+        Only exact start-time matches count; overlapping durations are not checked.
+        """
+        slots: dict[tuple[date, time], list[Task]] = defaultdict(list)
+        for task in tasks:
+            if not task.completed:
+                slots[(task.due_date, task.start_time)].append(task)
+
+        warnings = []
+        for (day, start), clashing in sorted(slots.items()):
+            if len(clashing) < 2:
+                continue
+            names = ", ".join(f"{t.pet.name}: {t.description}" for t in clashing)
+            same_pet = len({id(t.pet) for t in clashing}) == 1
+            scope = "same pet" if same_pet else "different pets"
+            warnings.append(f"Conflict on {day} at {start:%H:%M} [{scope}]: {names}")
+        return warnings
