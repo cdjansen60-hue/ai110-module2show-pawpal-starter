@@ -1,5 +1,5 @@
 classDiagram
-    %% PawPal+ draft design (Phase 1)
+    %% PawPal+ final design: matches pawpal_system.py
 
     class Owner {
         +str name
@@ -51,7 +51,13 @@ classDiagram
         +sort_by_time(tasks: list~Task~) list~Task~
         +get_todays_tasks(day: date) list~Task~
         +get_next_task(day: date) Task
+        +filter_tasks(tasks: list~Task~, pet_name: str, completed: bool) list~Task~
+        +mark_task_complete(task: Task) Task
+        +detect_conflicts(tasks: list~Task~) list~str~
     }
+
+    note for Scheduler "mark_task_complete: daily/weekly tasks get a copy\ndue +1/+7 days (RECURRENCE_INTERVALS), added to task.pet.\ndetect_conflicts: exact date + start_time matches only."
+    note for Task "eq=False: tasks compare by identity.\npet is set by Pet.add_task."
 
     Owner "1" o-- "*" Pet : owns
     Pet "1" *-- "*" Task : has
@@ -59,3 +65,4 @@ classDiagram
     Task --> Priority
     Task --> Frequency
     Scheduler --> Owner : reads tasks through
+    Scheduler ..> Task : creates next occurrence

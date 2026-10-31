@@ -1,0 +1,68 @@
+classDiagram
+    %% PawPal+ final design: matches pawpal_system.py
+
+    class Owner {
+        +str name
+        +list~Pet~ pets
+        +add_pet(pet: Pet) None
+        +get_pet(name: str) Pet
+        +get_all_tasks() list~Task~
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +int age
+        +list~Task~ tasks
+        +add_task(task: Task) None
+        +remove_task(task: Task) None
+    }
+
+    class Task {
+        +str category
+        +str description
+        +time start_time
+        +date due_date
+        +int duration_minutes
+        +Priority priority
+        +Frequency frequency
+        +bool completed
+        +Pet pet
+        +mark_complete() None
+    }
+
+    class Priority {
+        <<enumeration>>
+        LOW
+        MEDIUM
+        HIGH
+    }
+
+    class Frequency {
+        <<enumeration>>
+        ONCE
+        DAILY
+        WEEKLY
+    }
+
+    class Scheduler {
+        +Owner owner
+        +get_all_tasks() list~Task~
+        +sort_by_time(tasks: list~Task~) list~Task~
+        +get_todays_tasks(day: date) list~Task~
+        +get_next_task(day: date) Task
+        +filter_tasks(tasks: list~Task~, pet_name: str, completed: bool) list~Task~
+        +mark_task_complete(task: Task) Task
+        +detect_conflicts(tasks: list~Task~) list~str~
+    }
+
+    note for Scheduler "mark_task_complete: daily/weekly tasks get a copy\ndue +1/+7 days (RECURRENCE_INTERVALS), added to task.pet.\ndetect_conflicts: exact date + start_time matches only."
+    note for Task "eq=False: tasks compare by identity.\npet is set by Pet.add_task."
+
+    Owner "1" o-- "*" Pet : owns
+    Pet "1" *-- "*" Task : has
+    Task --> Pet : belongs to
+    Task --> Priority
+    Task --> Frequency
+    Scheduler --> Owner : reads tasks through
+    Scheduler ..> Task : creates next occurrence

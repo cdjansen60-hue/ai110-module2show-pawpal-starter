@@ -87,11 +87,35 @@ else:
 st.divider()
 
 st.subheader("Schedule")
-day = st.date_input("Show schedule for", value=date.today())
-tasks = scheduler.get_todays_tasks(day)
+col1, col2, col3 = st.columns(3)
+with col1:
+    day = st.date_input("Show schedule for", value=date.today())
+with col2:
+    pet_filter = st.selectbox("Pet", ["All"] + [p.name for p in owner.pets])
+with col3:
+    status_filter = st.selectbox("Status", ["All", "To do", "Done"])
 
-if not tasks:
+# Set by the "Mark complete" button below; shown once after the rerun it triggers.
+if "flash" in st.session_state:
+    st.success(st.session_state.pop("flash"))
+
+days_tasks = scheduler.get_todays_tasks(day)
+
+# Conflicts are checked on the whole day, not the filtered view, so a filter
+# can never hide a double-booking.
+for warning in scheduler.detect_conflicts(days_tasks):
+    st.warning(warning, icon="⚠️")
+
+tasks = scheduler.filter_tasks(
+    days_tasks,
+    pet_name=None if pet_filter == "All" else pet_filter,
+    completed={"All": None, "To do": False, "Done": True}[status_filter],
+)
+
+if not days_tasks:
     st.info("No tasks scheduled for this day.")
+elif not tasks:
+    st.info("No tasks match these filters.")
 else:
     st.table(
         [
@@ -108,8 +132,34 @@ else:
             for t in tasks
         ]
     )
+
+if days_tasks:
     next_task = scheduler.get_next_task(day)
     if next_task:
         st.info(f"Next up: {next_task.start_time:%H:%M} {next_task.description} ({next_task.pet.name})")
     else:
         st.success("Everything on this day is done!")
+
+    to_do = scheduler.filter_tasks(days_tasks, completed=False)
+    if to_do:
+        col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
+        with col1:
+            # Select by index: st.selectbox hands back a copy of object options, and
+            # completing a copy would leave the real task untouched.
+            index = st.selectbox(
+                "Task to complete",
+                range(len(to_do)),
+                format_func=lambda i: f"{to_do[i].start_time:%H:%M} {to_do[i].description} ({to_do[i].pet.name})",
+            )
+            selected = to_do[index]
+        with col2:
+            if st.button("Mark complete"):
+                next_occurrence = scheduler.mark_task_complete(selected)
+                message = f"Done: {selected.description} ({selected.pet.name})."
+                if next_occurrence:
+                    message += (
+                        f" Next {next_occurrence.frequency.value} occurrence scheduled for "
+                        f"{next_occurrence.due_date:%a %b %d}."
+                    )
+                st.session_state.flash = message
+                st.rerun()

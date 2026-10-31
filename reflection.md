@@ -34,13 +34,11 @@ The scheduler only handles exact start-time conflicts. This may result in overla
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used Claude for this project for most things. Initial development was slow as the design came together, but eventually it was mostly Claude debugging/refactoring after approval for design changes. The most helpful prompts were the ones that established the rules of the project. (i.e. "I am the architect, don't make decisions on your own")
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+At the very beginning Claude immediately tried to build the entire project. I had to walk it back so I would act as the architect. Beyond that, I had some design decisions I chose based on this exercise rather than some of Claude's more extensive suggestions. For example, one design decision was to have the tasks hold a reference to pets, even though that could introduce recursion. I chose this for code simplicity, rather than re-architecting the structure. My general opinion is these exercises should follow a minimal viable product(MVP) approach.
 
 ---
 
@@ -48,13 +46,11 @@ The scheduler only handles exact start-time conflicts. This may result in overla
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+Tests covered basic functionality, sorting, recurrence, conflict detection, filtering, edge cases, and data integrity. These are important to both prove functionality and maintain future code changes.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+I am reasonably confident the scheduler works in most cases. Edge cases I would test are duration overlap, late recurring task completion, UI tests, and code that intentionally breaks the pets/tasks recursion issue mentioned above.
 
 ---
 
@@ -62,12 +58,12 @@ The scheduler only handles exact start-time conflicts. This may result in overla
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I'm pretty happy with how quickly the problem collapsed upon itself once the design was created.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+Maybe a re-look at the object member heirarchy to avoid the recursion issue.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+AI is very good at taking a finalized concept and implementing it. This extends to edge-cases it finds along the way. That being said, if the initial concept isn't fully fleshed out, the final implementation reflects that. Though that could be said for non-AI projects as well.
